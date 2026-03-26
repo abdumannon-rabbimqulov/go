@@ -1,20 +1,39 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
+	"net/http"
 )
 
-// TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
-// the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
-func main() {
-	//TIP <p>Press <shortcut actionId="ShowIntentionActions"/> when your caret is at the underlined text
-	// to see how GoLand suggests fixing the warning.</p><p>Alternatively, if available, click the lightbulb to view possible fixes.</p>
-	s := "gopher"
-	fmt.Printf("Hello and welcome, %s!\n", s)
+type Todo struct {
+	ID   int    `json:"id"`
+	Task string `json:"task"`
+}
 
-	for i := 1; i <= 5; i++ {
-		//TIP <p>To start your debugging session, right-click your code in the editor and select the Debug option.</p> <p>We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-		// for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.</p>
-		fmt.Println("i =", 100/i)
-	}
+var todos []Todo
+
+func getTodos(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(todos)
+}
+
+// POST - yangi todo qo'shadi
+func createTodo(w http.ResponseWriter, r *http.Request) {
+	var newTodo Todo
+	json.NewDecoder(r.Body).Decode(&newTodo)
+
+	todos = append(todos, newTodo)
+	json.NewEncoder(w).Encode(newTodo)
+}
+
+func main() {
+	http.HandleFunc("/todos", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			getTodos(w, r)
+		} else if r.Method == "POST" {
+			createTodo(w, r)
+		}
+	})
+	println("Server http://localhost:8080/todos manzilida ishga tushdi...")
+
+	http.ListenAndServe(":8080", nil)
 }
